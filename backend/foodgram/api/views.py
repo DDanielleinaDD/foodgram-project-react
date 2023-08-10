@@ -156,9 +156,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         font_path = os.path.join(settings.BASE_DIR1, 'fonts', 'Lineyka.ttf')
         ingredients_in_cart = IngredientAmount.objects.filter(
             recipe__cart__user=request.user).values(
-                        'ingredient__name',
-                        'ingredient__measurement_unit').annotate(
-                            ingredient_amount=Sum('amount'))
+            'ingredient__name',
+            'ingredient__measurement_unit').annotate(
+            ingredient_amount=Sum('amount'))
         print(ingredients_in_cart)
         pdfmetrics.registerFont(TTFont('Lineyka', font_path))
         buffer = BytesIO()
