@@ -251,7 +251,7 @@ class UserRecipesGetSerializer(UserGetSerializer):
 
 
 class UserSubscriptionsGetSerializer(UserRecipesGetSerializer):
-    '''Сериализатор для получения подписок пользователя 
+    '''Сериализатор для получения подписок пользователя
        и рецептов авторов.'''
     recipes_count = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
