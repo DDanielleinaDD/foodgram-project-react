@@ -37,7 +37,7 @@ class User(AbstractUser):
     )
 
     class Meta:
-        ordering = ('-id',)
+        ordering = ('-username',)
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
@@ -67,6 +67,7 @@ class Follow(models.Model):
                 name='unique_user_author'
             )
         ]
+        # Подписка на себя ограничена в сериализаторе
 
     def __str__(self) -> str:
         return f'{self.user.username} - {self.author.username}'

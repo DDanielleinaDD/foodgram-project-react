@@ -1,28 +1,15 @@
-import base64
-
-from django.core.files.base import ContentFile
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
+from drf_extra_fields.fields import Base64ImageField
 
 from recipe.models import (Favorite, Ingredient, IngredientAmount, Recipe,
                            ShoppingCart, Tag)
 from users.models import Follow, User
 
 from .utils import create_ingredients
-
-
-class Base64ImageField(serializers.ImageField):
-    '''Декодирование байтового изображения.'''
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-
-            data = ContentFile(base64.b64decode(imgstr),
-                               name='temp.' + ext)
-        return super().to_internal_value(data)
 
 
 class UserGetSerializer(UserSerializer):
@@ -63,14 +50,15 @@ class TagSerializer(serializers.ModelSerializer):
     '''Сериализатор для работы с тэгами.'''
     class Meta:
         model = Tag
-        fields = '__all__'
+        fields = ('id', 'name',
+                  'color', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     ''''Сериализатор для ингредиентов.'''
     class Meta:
         model = Ingredient
-        fields = '__all__'
+        fields = ('name', 'measurement_unit')
 
 
 class IngredientAmountGetSerializer(serializers.ModelSerializer):
@@ -98,6 +86,18 @@ class IngredientAmountPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = IngredientAmount
         fields = ('id', 'amount')
+
+    def validate(self, attrs):
+        amount = attrs['amount']
+        if amount < 1:
+            raise serializers.ValidationError(
+                'Количество должно быть больше 0!'
+            )
+        if amount > 5000:
+            raise serializers.ValidationError(
+                'Количество не более 5000!'
+            )
+        return attrs
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
@@ -174,6 +174,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     image = Base64ImageField(
         required=True
     )
+    cooking_time = serializers.IntegerField(
+        required=True
+    )
 
     class Meta:
         model = Recipe
@@ -200,6 +203,19 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 'Вы указали повторяющиеся ингредиенты!'
             )
 
+        tags = attrs['tags']
+        tags_list = []
+        if not tags:
+            raise serializers.ValidationError(
+                'Рецепт без тэга запрещен!'
+            )
+        for tag in tags:
+            if tag in tags_list:
+                raise serializers.ValidationError(
+                    'Тэги не должны повторяться!'
+                )
+            tags_list.append(tag)
+
         cooking_time = attrs['cooking_time']
         if cooking_time < 1:
             raise serializers.ValidationError(
@@ -222,13 +238,11 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        if 'ingredients' in validated_data:
-            ingredients_new = validated_data.pop('ingredients')
-            instance.ingredients.clear()
-            create_ingredients(ingredients_new, instance)
-        if 'tags' in validated_data:
-            tags_new = validated_data.pop('tags')
-            instance.tags.set(tags_new)
+        ingredients_new = validated_data.pop('ingredients')
+        instance.ingredients.clear()
+        create_ingredients(ingredients_new, instance)
+        tags_new = validated_data.pop('tags')
+        instance.tags.set(tags_new)
         return super().update(instance,
                               validated_data)
 
@@ -268,7 +282,6 @@ class UserSubscriptionsGetSerializer(UserRecipesGetSerializer):
                             'recipes', 'recipes_count')
 
     def get_recipes(self, obj):
-        print(obj)
         request = self.context['request']
         if request:
             recipes_limit = request.query_params.get('recipes_limit')

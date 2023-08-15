@@ -15,16 +15,11 @@ class Command(BaseCommand):
                                      'data', 'ingredients.csv')
         with open(
             csv_file_path,
-            # f'{settings.BASE_DIR}/data/ingredients.csv',
             'r',
             encoding='utf-8'
         ) as csv_file:
             reader = csv.DictReader(csv_file, fieldnames=['name',
                                                           'measurement_unit'])
-            # for item in reader:
-            #     for row in item:
-            #         for r in row:
-            #             print(r)
             try:
                 Ingredient.objects.bulk_create(
                     Ingredient(**items) for items in reader

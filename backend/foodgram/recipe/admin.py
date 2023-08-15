@@ -4,8 +4,14 @@ from .models import (Favorite, Ingredient, IngredientAmount, Recipe,
                      ShoppingCart, Tag)
 
 
+class IngredientAmountAdmin(admin.TabularInline):
+    model = IngredientAmount
+    autocomplete_fields = ('ingredient',)
+
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    inlines = (IngredientAmountAdmin,)
     list_display = ('pk', 'name',
                     'author', 'text',
                     'pub_date',)

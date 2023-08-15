@@ -1,22 +1,14 @@
-import os
-
-from io import BytesIO
-
 from django.db.models import Sum
-from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen import canvas
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView, CreateAPIView, DestroyAPIView
 
 from recipe.models import (Favorite, Ingredient, IngredientAmount, Recipe,
                            ShoppingCart, Tag)
@@ -28,11 +20,16 @@ from .serializer import (FavoriteSerializer, FollowCreateSerializer,
                          IngredientSerializer, RecipeCreateSerializer,
                          RecipeGetSerializer, ShoppingCartSerializer,
                          TagSerializer, UserSubscriptionsGetSerializer)
+from .utils import create_pdf
 
 
-class UserFollowView(APIView):
-    '''Подписка и отписка пользователя на автора.'''
-    def post(self, request, user_id):
+class UserFollowView(CreateAPIView,
+                     DestroyAPIView):
+    queryset = User.objects.all()
+    pagination_class = PageNumberPagination
+    permisson_class = (IsAuthenticated,)
+
+    def create(self, request, user_id):
         author = get_object_or_404(User, id=user_id)
         serializer = FollowCreateSerializer(
             data={'user': request.user.id,
@@ -40,11 +37,10 @@ class UserFollowView(APIView):
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data,
-                        status=status.HTTP_201_CREATED)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def delete(self, request, user_id):
+    def destroy(self, request, user_id):
         author = get_object_or_404(User, id=user_id)
         if Follow.objects.filter(user=request.user,
                                  author=author).exists():
@@ -153,33 +149,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
-        font_path = os.path.join(settings.BASE_DIR1, 'fonts', 'Lineyka.ttf')
         ingredients_in_cart = IngredientAmount.objects.filter(
-            recipe__cart__user=request.user).values(
+            recipe__shoppingcart__user=request.user).values(
             'ingredient__name',
             'ingredient__measurement_unit').annotate(
             ingredient_amount=Sum('amount'))
-        print(ingredients_in_cart)
-        pdfmetrics.registerFont(TTFont('Lineyka', font_path))
-        buffer = BytesIO()
-        docs = canvas.Canvas(buffer, pagesize=letter)
-        docs.setFont('Lineyka', 12)
-        docs.drawString(75, 750, 'Список ингредиентов:', mode=2)
-        coord_y = 750
-        count = 1
-        for ingredient in ingredients_in_cart:
-            name = ingredient['ingredient__name']
-            unit = ingredient['ingredient__measurement_unit']
-            amount = ingredient['ingredient_amount']
-            docs.drawString(80, coord_y - 25,
-                            f'{count}) {name} - {amount}{unit}')
-            count += 1
-            coord_y -= 25
-
-        docs.showPage()
-        docs.save()
-
-        buffer.seek(0)
+        buffer = create_pdf(ingredients_in_cart)
         response = HttpResponse(buffer.read(), content_type='application/pdf')
         response['Content-Disposition'] = ('attachement;'
                                            'filename="ingredients.pdf"')
