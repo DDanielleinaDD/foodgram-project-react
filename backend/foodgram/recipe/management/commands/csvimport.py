@@ -10,7 +10,7 @@ from recipe.models import Ingredient
 class Command(BaseCommand):
     '''Загрузка ингредиентов в БД.'''
     def handle(self, *args, **options):
-        csv_file_path = os.path.join(settings.BASE_DIR1,
+        csv_file_path = os.path.join(settings.BASE_DIR_FOR_CSV,
                                      'data', 'ingredients.csv')
         with open(
             csv_file_path,

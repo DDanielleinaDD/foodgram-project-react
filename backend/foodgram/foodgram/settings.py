@@ -1,9 +1,14 @@
+import os
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-BASE_DIR1 = Path(__file__).resolve().parent.parent.parent.parent
+from dotenv import load_dotenv
 
-SECRET_KEY = 'django-insecure-0nz%(e%14+!6q%^m)ws3*)y+)2^pem=%n-1hru4nqa+!@2_y2c'
+load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+BASE_DIR_FOR_CSV = Path(__file__).resolve().parent.parent.parent.parent
+
+SECRET_KEY = os.getenv('SECRET_KEY', 'default')
 
 DEBUG = True  # Поменяю как буду деплоить на сервер.
 
@@ -117,3 +122,6 @@ DJOSER = {
         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
     }
 }
+
+MAX_LENGTH_EMAIL = 254
+MAX_LENGTH_OTHER = 150

@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from rest_framework.validators import UniqueTogetherValidator
 
 from .validators import validate_username
 
@@ -8,28 +10,28 @@ class User(AbstractUser):
     '''Модель пользователя.'''
     email = models.CharField(
         verbose_name='Почта пользователя',
-        max_length=254,
+        max_length=settings.MAX_LENGTH_EMAIL,
         unique=True,
     )
     username = models.CharField(
         verbose_name='Юзернейм пользователя',
-        max_length=150,
+        max_length=settings.MAX_LENGTH_OTHER,
         unique=True,
         validators=(validate_username,)
     )
     first_name = models.CharField(
         verbose_name='Имя пользователя',
-        max_length=150,
+        max_length=settings.MAX_LENGTH_OTHER,
         blank=True
     )
     last_name = models.CharField(
         verbose_name='Фамилия пользователя',
-        max_length=150,
+        max_length=settings.MAX_LENGTH_OTHER,
         blank=True
     )
     password = models.CharField(
         verbose_name='Пароль',
-        max_length=150,
+        max_length=settings.MAX_LENGTH_OTHER,
     )
     is_active = models.BooleanField(
         verbose_name='Доступ пользователя',
@@ -63,11 +65,16 @@ class Follow(models.Model):
         verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'author'],
+                fields=('user', 'author'),
                 name='unique_user_author'
             )
         ]
-        # Подписка на себя ограничена в сериализаторе
+        validators = [
+            UniqueTogetherValidator(
+                fields=('user', 'author'),
+                message='Вы уже подписаны на данного автора.'
+            )
+        ]
 
     def __str__(self) -> str:
         return f'{self.user.username} - {self.author.username}'
