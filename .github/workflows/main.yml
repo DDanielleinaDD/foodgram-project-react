@@ -102,7 +102,7 @@ jobs:
           target: "foodgram"
           run: true
       - name: Executing remote ssh commands to deploy
-        uses: appleboy/ssh-actions@master
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
