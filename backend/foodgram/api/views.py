@@ -2,14 +2,15 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipe.models import (Favorite, Ingredient, IngredientAmount, Recipe,
-                           ShoppingCart, Tag)
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView, DestroyAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+
+from recipe.models import (Favorite, Ingredient, IngredientAmount, Recipe,
+                           ShoppingCart, Tag)
 from users.models import Follow, User
 
 from .filters import IngredientFilter, RecipeFilter
@@ -90,6 +91,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action in ('list', 'retrieve'):
             return RecipeGetSerializer
         return RecipeCreateSerializer
+
+    def get_queryset(self):
+        is_favorited = self.request.query_params.get('is_favorited')
+        if is_favorited:
+            return Recipe.objects.filter(favorite__user=self.request.user)
+        is_in_shopping_cart = (self.request.query_params
+                               .get('is_in_shopping_cart'))
+        if is_in_shopping_cart:
+            return Recipe.objects.filter(shoppingcart__user=self.request.user)
+        return Recipe.objects.all()
 
     @action(
         methods=['post', 'delete'],

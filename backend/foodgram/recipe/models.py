@@ -96,7 +96,7 @@ class Recipe(models.Model):
     )
     tags = models.ManyToManyField(
         Tag,
-        verbose_name='Тэш рецепта',
+        verbose_name='Тэг рецепта',
     )
 
     class Meta:

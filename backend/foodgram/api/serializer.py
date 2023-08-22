@@ -1,10 +1,11 @@
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from recipe.models import (Favorite, Ingredient, IngredientAmount, Recipe,
-                           ShoppingCart, Tag)
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
+
+from recipe.models import (Favorite, Ingredient, IngredientAmount, Recipe,
+                           ShoppingCart, Tag)
 from users.models import Follow, User
 
 from .utils import create_ingredients
@@ -56,7 +57,7 @@ class IngredientSerializer(serializers.ModelSerializer):
     ''''Сериализатор для ингредиентов.'''
     class Meta:
         model = Ingredient
-        fields = ('name', 'measurement_unit')
+        fields = ('__all__')
 
 
 class IngredientAmountGetSerializer(serializers.ModelSerializer):
@@ -146,14 +147,16 @@ class RecipeGetSerializer(serializers.ModelSerializer):
                   'text', 'cooking_time')
 
     def get_is_favorited(self, obj):
+        request = self.context['request']
         user = self.context['request'].user
-        return (user.is_authenticated
+        return (request and user.is_authenticated
                 and Favorite.objects.filter(user=user,
                                             recipe=obj).exists())
 
     def get_is_in_shopping_cart(self, obj):
+        request = self.context['request']
         user = self.context['request'].user
-        return (user.is_authenticated
+        return (request and user.is_authenticated
                 and ShoppingCart.objects.filter(user=user,
                                                 recipe=obj).exists())
 
@@ -161,6 +164,7 @@ class RecipeGetSerializer(serializers.ModelSerializer):
 class RecipeCreateSerializer(serializers.ModelSerializer):
     '''Сериализатор создания рецепта.'''
     ingredients = IngredientAmountPostSerializer(
+        source='ingredientamount',
         required=True,
         many=True,
     )
@@ -183,7 +187,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                   'text', 'cooking_time')
 
     def validate(self, attrs):
-        ingredients = attrs['ingredients']
+        ingredients = attrs['ingredientamount']
         ingredients_list = []
         for ingredient in ingredients:
             if not Ingredient.objects.filter(
@@ -225,7 +229,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context['request']
         author = request.user
-        ingredients = validated_data.pop('ingredients')
+        ingredients = validated_data.pop('ingredientamount')
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(
             author=author, **validated_data
@@ -236,7 +240,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        ingredients_new = validated_data.pop('ingredients')
+        ingredients_new = validated_data.pop('ingredientamount')
         instance.ingredients.clear()
         create_ingredients(ingredients_new, instance)
         tags_new = validated_data.pop('tags')

@@ -4,13 +4,14 @@ import os
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
+
 from recipe.models import Ingredient
 
 
 class Command(BaseCommand):
     '''Загрузка ингредиентов в БД.'''
     def handle(self, *args, **options):
-        csv_file_path = os.path.join(settings.BASE_DIR_FOR_CSV,
+        csv_file_path = os.path.join(settings.BASE_DIR,
                                      'data', 'ingredients.csv')
         with open(
             csv_file_path,

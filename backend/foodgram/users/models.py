@@ -67,12 +67,10 @@ class Follow(models.Model):
             models.UniqueConstraint(
                 fields=('user', 'author'),
                 name='unique_user_author'
-            )
-        ]
-        validators = [
-            UniqueTogetherValidator(
-                fields=('user', 'author'),
-                message='Вы уже подписаны на данного автора.'
+            ),
+            models.CheckConstraint(
+                name='Подписка на себя невозможна',
+                check=~models.Q(author=models.F('user'))
             )
         ]
 
