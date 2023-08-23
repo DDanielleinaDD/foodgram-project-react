@@ -12,8 +12,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'default')
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['foodgram-prjct.ddnsking.com', '51.250.31.189',
-                 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['51.250.31.189', 'localhost', '127.0.0.1', 'foodgram-prjct.ddnsking.com']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
