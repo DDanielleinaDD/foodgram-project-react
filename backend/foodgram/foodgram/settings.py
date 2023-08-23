@@ -14,6 +14,10 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['51.250.31.189', 'localhost', '127.0.0.1', 'foodgram-prjct.ddnsking.com']
 
+CSRF_TRUSTED_ORIGINS = ['http://51.250.31.189', 'https://51.250.31.189',
+                        'http://foodgram-prjct.ddnsking.com',
+                        'https://foodgram-prjct.ddnsking.com']
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
