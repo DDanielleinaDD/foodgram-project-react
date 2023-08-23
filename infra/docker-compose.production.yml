@@ -1,48 +1,94 @@
-version: '3'
+# version: '3'
 
-volumes:
-  pg_data:
-  static:
-  media:
+# volumes:
+#   pg_data:
+#   static:
+#   media:
 
+# services:
+
+#   db:
+#     image: postgres:13.10
+#     env_file: .env
+#     volumes:
+#       - pg_data:/var/lib/postgressql/data
+
+#   backend:
+#     image: danielleinad/foodgram_backend
+#     restart: always
+#     env_file: .env
+#     depends_on:
+#       - db
+#     volumes:
+#       - static:/backend_static
+#       - media:/app/media/
+
+#   frontend:
+#     image: danielleinad/foodgram_frontend
+#     # build:
+#     #   context: ../frontend
+#     #   dockerfile: Dockerfile
+#     volumes:
+#       - ../foodgram_frontend/:/app/result_build/
+#     depends_on:
+#       - backend
+#   nginx:
+#     image: nginx:1.19.3
+#     ports:
+#       - "6000:80"
+#     volumes:
+#       - ./nginx.conf:/etc/nginx/conf.d/default.conf
+#       - ../frontend/build:/usr/share/nginx/html/
+#       - ../docs/:/usr/share/nginx/html/api/docs/
+#       - static:/var/html/static/
+#       - media:/var/html/media/
+#     depends_on:
+#       - frontend
+
+version: '3.3'
+ 
 services:
-
+ 
   db:
-    image: postgres:13.10
-    env_file: .env
+    image: postgres:13.0
     volumes:
-      - pg_data:/var/lib/postgressql/data
-
+      - db_vol:/var/lib/postgresql/data/
+    restart: always
+    env_file:
+      - .env
+ 
   backend:
     image: danielleinad/foodgram_backend
-    # build: ./backend/
-    restart: always
-    env_file: .env
+    volumes:
+      - static_vol:/app/static/
+      - media_vol:/app/media/
     depends_on:
       - db
-    volumes:
-      - static:/backend_static
-      - media:/app/media/
-
+    env_file:
+      - .env
+ 
   frontend:
     image: danielleinad/foodgram_frontend
-    # build:
-    #   context: ../frontend
-    #   dockerfile: Dockerfile
     volumes:
-      - ../foodgram_frontend/:/app/result_build/
+      - ../frontend/:/app/result_build/
     depends_on:
       - backend
-
+ 
   nginx:
     image: nginx:1.19.3
     ports:
       - "6000:80"
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ../frontend/build:/usr/share/nginx/html/
-      - ../docs/:/usr/share/nginx/html/api/docs/
-      - static:/var/html/static/
-      - media:/var/html/media/
+      - ./docs/:/usr/share/nginx/html/api/docs/
+      - static_vol:/var/html/static/
+      - media_vol:/var/html/media/
+    restart: always
     depends_on:
       - frontend
+ 
+volumes:
+  db_vol:
+  static_vol:
+  media_vol:
