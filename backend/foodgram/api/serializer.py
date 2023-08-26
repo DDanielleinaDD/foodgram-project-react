@@ -232,10 +232,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             )
         return attrs
 
-    # def validate_name(self, value):
-    #     if re.match(r'^[0-9\W]+$', value):
-    #         raise ValidationError
-
     @transaction.atomic
     def create(self, validated_data):
         request = self.context['request']
