@@ -1,4 +1,4 @@
-![Github actions](https://github.com/DDanielleinaDD/foodgram-project-react/actions/workflows/main.yml/badge.svg)
+![Github actions](https://github.com/DDanielleinaDD/foodgram-project-react/actions/workflows/main.yml)
 ##  Продуктовый помощник - foodgram
 
 ### Сайт, на котором пользователи будут публиковать рецепты, добавлять чужие рецепты в избранное и подписываться на публикации других авторов. Сервис «cписок покупок» позволит пользователям создавать список ингредиентов, которые нужно купить для приготовления выбранных блюд. Есть возможность выгрузить файл (.pdf) с перечнем и количеством необходимых ингредиентов для рецептов.
