@@ -1,4 +1,6 @@
+import re
 from django.db import transaction
+from django.forms import ValidationError
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from recipe.models import (Favorite, Ingredient, IngredientAmount, Recipe,
@@ -186,6 +188,11 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                   'text', 'cooking_time')
 
     def validate(self, attrs):
+        name = attrs['name']
+        if re.match(r'^[0-9\W]+$', name):
+            raise ValidationError(
+                'Название не может состоять из цифр или знаков'
+            )
         ingredients = attrs['ingredientamount']
         ingredients_list = []
         for ingredient in ingredients:
@@ -223,6 +230,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 'Время приготовления должно быть минимум 1 минута!'
             )
         return attrs
+
+    # def validate_name(self, value):
+    #     if re.match(r'^[0-9\W]+$', value):
+    #         raise ValidationError
 
     @transaction.atomic
     def create(self, validated_data):
